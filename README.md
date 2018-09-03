@@ -1,4 +1,4 @@
-# SO\_Intro\_2018
+# SO Intro 2018
 
 ## Resumen
 
