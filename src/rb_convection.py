@@ -1,22 +1,18 @@
 """
 Dedalus script for calculating the maximum growth rates in no-slip
 Rayleigh Benard convection over a range of horizontal wavenumbers.
-
 This script can be ran serially or in parallel, and produces a plot of the
 highest growth rate found for each horizontal wavenumber.
-
 To run using 4 processes, for instance, you could use:
     $ mpiexec -n 4 python3 rayleigh_benard.py
-
 """
 
 import time
+import os
 import numpy as np
 import matplotlib.pyplot as plt
 import dedalus.public as de
 from dedalus.extras import flow_tools, plot_tools
-from mpi4py import MPI
-CW = MPI.COMM_WORLD
 import logging
 logger = logging.getLogger(__name__)
 
@@ -35,7 +31,6 @@ z_basis = de.Chebyshev('z', Nz, interval=(0, Lz))
 domain = de.Domain([x_basis,y_basis,z_basis], grid_dtype=np.float64)
 
 # 3D Boussinesq
-#problem = de.IVP(domain, variables=['p','b','u','v','w','by','vy','uy','wy','bz','uz','vz','wz'])
 problem = de.IVP(domain, variables=['p','b','u','v','w','bz','uz','vz','wz'], time='t')
 problem.meta[:]['z']['dirichlet'] = True
 problem.parameters['P'] = (Rayleigh * Prandtl)**(-1/2)
@@ -53,19 +48,7 @@ problem.add_equation("uz - dz(u) = 0")
 problem.add_equation("vz - dz(v) = 0")
 problem.add_equation("wz - dz(w) = 0")
 
-#Condiciones de contorno en z
-#problem.add_bc("left(b) = 0")
-#problem.add_bc("left(u) = 0")
-#problem.add_bc("left(v) = 0")
-#problem.add_bc("left(w) = 0")
-#problem.add_bc("left(p) = 0")
-#problem.add_bc("right(b) = 0")
-#problem.add_bc("right(p) = 0")
-#problem.add_bc("right(u) = 0")
-#problem.add_bc("right(v) = 0")
-#problem.add_bc("right(w) = 0")
-
-
+#Condiciones de contorno de z
 problem.add_bc("left(b) = 1")
 problem.add_bc("left(u) = 0")
 problem.add_bc("left(v) = 0")
@@ -75,8 +58,6 @@ problem.add_bc("right(p) = 0", condition="(nx == 0) and (ny == 0)")
 problem.add_bc("right(u) = 0")
 problem.add_bc("right(v) = 0")
 problem.add_bc("right(w) = 0", condition="(nx != 0) or (ny != 0)")
-#problem.add_bc("integ(p, 'z') = 0", condition="(nx == 0)")
-
 
 # Build solver
 solver = problem.build_solver(de.timesteppers.MCNAB2)
@@ -86,31 +67,13 @@ logger.info('Solver built')
 z = domain.grid(2)
 b = solver.state['b']
 bz = solver.state['bz']
-#u = solver.state['u']
-#v = solver.state['v']
-#w = solver.state['w']
-#p = solver.state['p']
 
-#Random perturbations
-gshape = domain.dist.grid_layout.global_shape(scales=1)
-slices = domain.dist.grid_layout.slices(scales=1)
-rand = np.random.RandomState(seed=42)
-noise = rand.standard_normal(gshape)[slices]
-# Linear background + perturbations damped at walls
-zb, zt = z_basis.interval
-pert =  1e-3 * noise * (zt - z) * (-z+1)
-b['g'] = -F*(z - pert)
-#b.differentiate('z', out=bz)
-#pert =  1e-3 * noise * (zt - z) * (z - zb)
-#b['g'] = (-z +1)
-#b.differentiate('z', out=bz)
-#b.differentiate('z', out=bz)
-#b['g'] = F #* pert
-#b['g'] = F #Uniform heat
-#b.set_scales(1/4, keep_data=True)
-#b['c']
-#b['g']
-#b.set_scales(1, keep_data=True)
+b['g'] = F*(1-z)
+
+# Analysis
+dir_path = os.path.dirname(os.path.realpath(__file__))
+snapshots = solver.evaluator.add_file_handler(dir_path+'/'+'snapshots', sim_dt=0.25, max_writes=50)
+snapshots.add_system(solver.state)
 
 # Setup storage
 b_list = []
@@ -121,13 +84,12 @@ dt = 1e-3
 # Integration parameters
 solver.stop_sim_time = 1000
 solver.stop_wall_time = 100 * 60.
-solver.stop_iteration = 100+1 
+solver.stop_iteration = np.inf
 
 max_dt = 10
 
 CFL = flow_tools.CFL(solver, initial_dt=dt, cadence=1, safety=0.8/2,
                      max_change=1.5, min_change=0.5, max_dt=max_dt, threshold=0.05)
-
 CFL.add_velocities(('u', 'v', 'w'))
 
 # Flow properties
@@ -204,5 +166,4 @@ finally:
         plt.ylabel('z')
 #        plt.title('A dispersive shock!')
         plt.show()
-
 
