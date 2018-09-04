@@ -121,7 +121,7 @@ dt = 1e-3
 # Integration parameters
 solver.stop_sim_time = 1000
 solver.stop_wall_time = 100 * 60.
-solver.stop_iteration = 50+1 #100
+solver.stop_iteration = 100+1 
 
 max_dt = 10
 
@@ -197,14 +197,12 @@ finally:
 #        print(b_array[2][:][5][:])
        # np.savetxt("hola.txt",b_array)
         #print(b_array[0][:][1][:])
-        plt.pcolormesh(xmesh, ymesh, b_array[50][:][1][:].T, cmap='RdBu_r')
+        plt.pcolormesh(xmesh, ymesh, b_array[80][:][1][:].T, cmap='RdBu_r')
         #plt.axis(plot_tools.pad_limits(xmesh, ymesh))
         plt.colorbar()
         plt.xlabel('x')
         plt.ylabel('z')
 #        plt.title('A dispersive shock!')
         plt.show()
-
-
 
 
