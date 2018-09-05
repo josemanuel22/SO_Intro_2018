@@ -64,7 +64,6 @@ solver = problem.build_solver(de.timesteppers.MCNAB2)
 logger.info('Solver built')
 
 # Load restart
-# archive decay timescales
 dir_path = os.path.dirname(os.path.realpath(__file__))
 dir_current_snapshots = sorted(os.listdir(dir_path+'/'+'snapshots'))[-1]
 current_snapshots =  dir_path + '/' + 'snapshots'+ '/' + dir_current_snapshots + '/' + dir_current_snapshots +'_p0.h5'
@@ -107,18 +106,11 @@ try:
     start_time = time.time()
     while solver.ok:
         dt = CFL.compute_dt()
-        dt = solver.step(dt) #, trim=True)
-        log_string = 'Iteration: %i, Time: %e, dt: %e' %(solver.iteration, solver.sim_time, dt)
-        logger.info(log_string)
-        #b_list.append(np.copy(b['g']))
-        #t_list.append(solver.sim_time)
-        if solver.iteration % 1 == 0:
-
-            #de.operators.interpolate(b, x=0, y=0).evaluate()['g'][0,0])
-            #print(b['g'])
+        dt = solver.step(dt)
+        if solver.iteration % 10 == 0:
+            logger.info('Iteration: %i, Time: %e, dt: %e' %(solver.iteration, solver.sim_time, dt))
             b_list.append(np.copy(b['g']))
             t_list.append(solver.sim_time)
-        logger.info('Iteration: %i, Time: %e, dt: %e' %(solver.iteration, solver.sim_time, dt))
 except:
     logger.error('Exception raised, triggering end of main loop.')
     raise
@@ -128,47 +120,17 @@ finally:
     # Convert storage to arrays
     b_array = np.array(b_list, dtype=np.float64)
     t_array = np.array(t_list, dtype=np.float64)
+
     logger.info('Iterations: %i' %solver.iteration)
     logger.info('Sim end time: %f' %solver.sim_time)
     logger.info('Run time: %.2f sec' %(end_time-start_time))
     logger.info('Run time: %f cpu-hr' %((end_time-start_time)/60/60*domain.dist.comm_cart.size))
 
     if (domain.distributor.rank==0):
-        N_TOTAL_CPU = domain.distributor.comm_cart.size
-
-        # Print statistics
-        print('-' * 40)
-        total_time = end_time-initial_time
-        main_loop_time = end_time - start_time
-        startup_time = start_time-initial_time
-        n_steps = solver.iteration-1
-#        s.set_array(np.ravel(b['g'][:-1,:-1].T))
-        print('  startup time:', startup_time)
-        print('main loop time:', main_loop_time)
-        print('    total time:', total_time)
-        print('    iterations:', solver.iteration)
-        print(' loop sec/iter:', main_loop_time/solver.iteration)
-        print('    average dt:', solver.sim_time/n_steps)
-        print("          N_cores, Nx, Ny, Nz, startup     main loop,   main loop/iter, main loop/iter/grid, n_cores*main loop/iter/grid")
-        print('scaling:',
-              ' {:d} {:d} {:d} {:d}'.format(N_TOTAL_CPU,Nx,Ny,Nz),
-              ' {:8.3g} {:8.3g} {:8.3g} {:8.3g} {:8.3g}'.format(startup_time,
-                                                                main_loop_time, 
-                                                                main_loop_time/n_steps, 
-                                                                main_loop_time/n_steps/(Nx*Ny*Nz), 
-                                                                N_TOTAL_CPU*main_loop_time/n_steps/(Nx*Ny*Nz)))
-        print('-' * 40)
         xmesh, ymesh = plot_tools.quad_mesh(x=domain.grid(0, scales=domain.dealias).flatten(), y=domain.grid(2, scales=domain.dealias).flatten())
-        # Plot
-#        plt.figure(figsize=(12, 8))
-#        print(b_array[2][:][5][:])
-       # np.savetxt("hola.txt",b_array)
-        #print(b_array[0][:][1][:])
         plt.pcolormesh(xmesh, ymesh, b_array[80][:][1][:].T, cmap='RdBu_r')
-        #plt.axis(plot_tools.pad_limits(xmesh, ymesh))
         plt.colorbar()
         plt.xlabel('x')
         plt.ylabel('z')
-#        plt.title('A dispersive shock!')
         plt.show()
 
