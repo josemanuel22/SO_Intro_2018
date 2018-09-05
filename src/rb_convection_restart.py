@@ -64,8 +64,11 @@ solver = problem.build_solver(de.timesteppers.MCNAB2)
 logger.info('Solver built')
 
 # Load restart
+# archive decay timescales
 dir_path = os.path.dirname(os.path.realpath(__file__))
-write, dt = solver.load_state(dir_path + '/' + 'snapshots/snapshots_s2.h5', -1)
+dir_current_snapshots = sorted(os.listdir(dir_path+'/'+'snapshots'))[-1]
+current_snapshots =  dir_path + '/' + 'snapshots'+ '/' + dir_current_snapshots + '/' + dir_current_snapshots +'_p0.h5'
+write, dt = solver.load_state(current_snapshots, -1)
 
 # Initial conditions
 z = domain.grid(2)
