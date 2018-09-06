@@ -102,18 +102,12 @@ try:
     start_time = time.time()
     while solver.ok:
         dt = CFL.compute_dt()
-        dt = solver.step(dt) #, trim=True)
-        log_string = 'Iteration: %i, Time: %e, dt: %e' %(solver.iteration, solver.sim_time, dt)
-        logger.info(log_string)
-        #b_list.append(np.copy(b['g']))
-        #t_list.append(solver.sim_time)
-        if solver.iteration % 1 == 0:
-
-            #de.operators.interpolate(b, x=0, y=0).evaluate()['g'][0,0])
-            #print(b['g'])
-            b_list.append(np.copy(b['g']))
-            t_list.append(solver.sim_time)
+        dt = solver.step(dt)
         logger.info('Iteration: %i, Time: %e, dt: %e' %(solver.iteration, solver.sim_time, dt))
+        if solver.iteration % 10 == 0:
+            logger.info('Iteration: %i, Time: %e, dt: %e' %(solver.iteration, solver.sim_time, dt))
+        #    b_list.append(np.copy(b['g']))
+        #    t_list.append(solver.sim_time)
 except:
     logger.error('Exception raised, triggering end of main loop.')
     raise
@@ -137,7 +131,6 @@ finally:
         main_loop_time = end_time - start_time
         startup_time = start_time-initial_time
         n_steps = solver.iteration-1
-#        s.set_array(np.ravel(b['g'][:-1,:-1].T))
         print('  startup time:', startup_time)
         print('main loop time:', main_loop_time)
         print('    total time:', total_time)
@@ -153,17 +146,12 @@ finally:
                                                                 main_loop_time/n_steps/(Nx*Ny*Nz), 
                                                                 N_TOTAL_CPU*main_loop_time/n_steps/(Nx*Ny*Nz)))
         print('-' * 40)
-        xmesh, ymesh = plot_tools.quad_mesh(x=domain.grid(0, scales=domain.dealias).flatten(), y=domain.grid(2, scales=domain.dealias).flatten())
-        # Plot
-#        plt.figure(figsize=(12, 8))
-#        print(b_array[2][:][5][:])
-       # np.savetxt("hola.txt",b_array)
-        #print(b_array[0][:][1][:])
-        plt.pcolormesh(xmesh, ymesh, b_array[80][:][1][:].T, cmap='RdBu_r')
-        #plt.axis(plot_tools.pad_limits(xmesh, ymesh))
-        plt.colorbar()
-        plt.xlabel('x')
-        plt.ylabel('z')
-#        plt.title('A dispersive shock!')
-        plt.show()
+
+        #Old Printer
+        #xmesh, ymesh = plot_tools.quad_mesh(x=domain.grid(0, scales=domain.dealias).flatten(), y=domain.grid(2, scales=domain.dealias).flatten())
+        #plt.pcolormesh(xmesh, ymesh, b_array[80][:][1][:].T, cmap='RdBu_r')
+        #plt.colorbar()
+        #plt.xlabel('x')
+        #plt.ylabel('z')
+        #plt.show()
 
