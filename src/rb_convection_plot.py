@@ -1,3 +1,14 @@
+"""
+Plot planes from joint analysis files.
+
+Usage:
+    rb_convection_plot.py <file> [--output=<dir>]
+
+Options:
+    --output=<dir>  Output directory [default: ./frames]
+
+"""
+
 import numpy as np
 import matplotlib.pyplot as plt
 import pathlib
@@ -19,14 +30,42 @@ set_paths = list(pathlib.Path(dir_path+'/'+'snapshots').glob("snapshots_s*/snaps
 if not os.path.isfile(dir_path+'/'+'snapshots'+'/'+'snapshots.h5'):
   post.merge_sets(dir_path+'/'+'snapshots'+'/'+'snapshots.h5', set_paths, cleanup=True)
 
-fig = plt.figure(figsize=(10, 6))
-with h5py.File(dir_path+'/'+'snapshots/snapshots.h5', mode='r') as file:
-  t = file['scales']['sim_time']
-  b = file['tasks']['b']
-  xmesh, ymesh = plot_tools.quad_mesh(x=domain.grid(0, scales=domain.dealias).flatten(), y=domain.grid(2, scales=domain.dealias).flatten())
-  plt.pcolormesh(xmesh, ymesh, b[80,:,8,:].T, cmap='RdBu_r')
-  plt.colorbar()
-  plt.xlabel('x')
-  plt.ylabel('z')
-  plt.show()
+def interpolate(filename, output, time, axis, value):
+  fig = plt.figure(figsize=(10, 6))
+  with h5py.File(dir_path+'/'+'snapshots/snapshots.h5', mode='r') as file:
+    t = file['scales']['sim_time']
+    b = file['tasks']['b']
+    if axis =='x':
+      b_v=b[time,value,:,:].T
+    elif axis =='y':
+      b_v=b[time,:,value,:].T
+    elif axis =='z':
+      b_v=b[time,:,:,value].T
+    else:
+      return
+    xmesh, ymesh = plot_tools.quad_mesh(x=domain.grid(0, scales=domain.dealias).flatten(), y=domain.grid(2, scales=domain.dealias).flatten())
+    plt.pcolormesh(xmesh, ymesh, b_v, cmap='RdBu_r')
+    plt.colorbar()
+    plt.xlabel('x')
+    plt.ylabel('z')
+
+    dpi=100
+    print(filename)
+    print(output)
+    savepath = output.joinpath(filename)
+    fig.savefig(str(savepath), dpi=dpi)
+    fig.clear()
+    plt.close(fig)
+
+
+if __name__ == "__main__":
+  from docopt import docopt
+
+  args = docopt(__doc__)
+  output_path = pathlib.Path(args['--output']).absolute()
+  if not output_path.exists():
+    output_path.mkdir()
+    interpolate(args['<file>'], output_path, time=80, axis='y', value=8)
+
+  #plt.show()
 
