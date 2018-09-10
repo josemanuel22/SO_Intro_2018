@@ -12,6 +12,7 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 import dedalus.public as de
+from mpi4py import MPI
 from dedalus.extras import flow_tools, plot_tools
 import logging
 logger = logging.getLogger(__name__)

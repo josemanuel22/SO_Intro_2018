@@ -18,21 +18,24 @@ from dedalus.tools import post
 import h5py
 import dedalus.public as de
 
-Nx=16; Ny= 16; Nz = 16;
-Lx=25; Ly=25; Lz= 1;
-x_basis = de.Fourier('x', Nx, interval=(0, Lx))
-y_basis = de.Fourier('y', Ny, interval=(0, Ly))
-z_basis = de.Chebyshev('z', Nz, interval=(0, Lz))
-domain = de.Domain([x_basis,y_basis,z_basis], grid_dtype=np.float64)
+DIR_PATH = os.path.dirname(os.path.realpath(__file__))
 
-dir_path = os.path.dirname(os.path.realpath(__file__))
-set_paths = list(pathlib.Path(dir_path+'/'+'snapshots').glob("snapshots_s*/snapshots_s*.h5"))
-if not os.path.isfile(dir_path+'/'+'snapshots'+'/'+'snapshots.h5'):
-  post.merge_sets(dir_path+'/'+'snapshots'+'/'+'snapshots.h5', set_paths, cleanup=True)
+def merge():
+    set_paths = list(pathlib.Path(DIR_PATH+'/'+'snapshots').glob("snapshots_s*/snapshots_s*.h5"))
+    if not os.path.isfile(DIR_PATH+'/'+'snapshots'+'/'+'snapshots.h5'):
+      post.merge_sets(DIR_PATH+'/'+'snapshots'+'/'+'snapshots.h5', set_paths, cleanup=False)
 
 def interpolate(filename, output, time, axis, value):
+
+  Nx=16; Ny= 16; Nz = 16;
+  Lx=25; Ly=25; Lz= 1;
+  x_basis = de.Fourier('x', Nx, interval=(0, Lx))
+  y_basis = de.Fourier('y', Ny, interval=(0, Ly))
+  z_basis = de.Chebyshev('z', Nz, interval=(0, Lz))
+  domain = de.Domain([x_basis,y_basis,z_basis], grid_dtype=np.float64)
+
   fig = plt.figure(figsize=(10, 6))
-  with h5py.File(dir_path+'/'+'snapshots/snapshots.h5', mode='r') as file:
+  with h5py.File(DIR_PATH+'/'+'snapshots/snapshots.h5', mode='r') as file:
     t = file['scales']['sim_time']
     b = file['tasks']['b']
     if axis =='x':
@@ -50,8 +53,6 @@ def interpolate(filename, output, time, axis, value):
     plt.ylabel('z')
 
     dpi=100
-    print(filename)
-    print(output)
     savepath = output.joinpath(filename)
     fig.savefig(str(savepath), dpi=dpi)
     fig.clear()
@@ -61,11 +62,12 @@ def interpolate(filename, output, time, axis, value):
 if __name__ == "__main__":
   from docopt import docopt
 
+  merge()
   args = docopt(__doc__)
   output_path = pathlib.Path(args['--output']).absolute()
   if not output_path.exists():
     output_path.mkdir()
-    interpolate(args['<file>'], output_path, time=80, axis='y', value=8)
+  interpolate(args['<file>'], output_path, time=80, axis='y', value=8)
 
   #plt.show()
 

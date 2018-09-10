@@ -8,6 +8,7 @@ To run using 4 processes, for instance, you could use:
 """
 
 import time
+from mpi4py import MPI
 import os
 import numpy as np
 import matplotlib.pyplot as plt
