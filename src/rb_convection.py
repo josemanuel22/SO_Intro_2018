@@ -107,8 +107,8 @@ try:
         logger.info('Iteration: %i, Time: %e, dt: %e' %(solver.iteration, solver.sim_time, dt))
         if solver.iteration % 10 == 0:
             logger.info('Iteration: %i, Time: %e, dt: %e' %(solver.iteration, solver.sim_time, dt))
-        #    b_list.append(np.copy(b['g']))
-        #    t_list.append(solver.sim_time)
+            b_list.append(np.copy(b['g']))
+            t_list.append(solver.sim_time)
 except:
     logger.error('Exception raised, triggering end of main loop.')
     raise
