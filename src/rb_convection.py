@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 initial_time = time.time()
 
 # Global parameters
-Nx=16; Ny= 16; Nz = 16;
+Nx=18; Ny= 64; Nz =16;
 Prandtl = 0.025
 Rayleigh = 10**5
 Lx=25; Ly=25; Lz= 1;
@@ -94,12 +94,11 @@ bz = solver.state['bz']
 #Random perturbations
 gshape = domain.dist.grid_layout.global_shape(scales=1)
 slices = domain.dist.grid_layout.slices(scales=1)
-print(slices)
 rand = np.random.RandomState(seed=42)
 noise = rand.standard_normal(gshape)[slices]
 # Linear background + perturbations damped at walls
 zb, zt = z_basis.interval
-pert =  1e-3 * noise * (zt - z) * (-z+1)
+pert =  1e-3 * noise * (zb - z) * (-z+zt)
 b['g'] = -F*(z - pert)
 #b.differentiate('z', out=bz)
 #pert =  1e-3 * noise * (zt - z) * (z - zb)
@@ -122,7 +121,7 @@ dt = 1e-3
 # Integration parameters
 solver.stop_sim_time = 1000
 solver.stop_wall_time = 100 * 60.
-solver.stop_iteration = 100+1 
+solver.stop_iteration = 10 
 
 max_dt = 10
 
@@ -198,7 +197,7 @@ finally:
 #        print(b_array[2][:][5][:])
        # np.savetxt("hola.txt",b_array)
         #print(b_array[0][:][1][:])
-        plt.pcolormesh(xmesh, ymesh, b_array[80][:][1][:].T, cmap='RdBu_r')
+        plt.pcolormesh(xmesh, ymesh, b_array[8][:][1][:].T, cmap='RdBu_r')
         #plt.axis(plot_tools.pad_limits(xmesh, ymesh))
         plt.colorbar()
         plt.xlabel('x')
