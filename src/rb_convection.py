@@ -94,6 +94,7 @@ bz = solver.state['bz']
 #Random perturbations
 gshape = domain.dist.grid_layout.global_shape(scales=1)
 slices = domain.dist.grid_layout.slices(scales=1)
+print(slices)
 rand = np.random.RandomState(seed=42)
 noise = rand.standard_normal(gshape)[slices]
 # Linear background + perturbations damped at walls
