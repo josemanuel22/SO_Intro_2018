@@ -23,30 +23,39 @@ logger = logging.getLogger(__name__)
 initial_time = time.time()
 
 # Global parameters
-Nx=18; Ny= 64; Nz =16;
+Nx=16; Ny= 16; Nz =16;
 Prandtl = 0.025
 Rayleigh = 10**5
 Lx=25; Ly=25; Lz= 1;
 
 # Create bases and domain
-x_basis = de.Fourier('x', Nx, interval=(0, Lx))
-y_basis = de.Fourier('y', Ny, interval=(0, Ly))
+#x_basis = de.Fourier('x', Nx, interval=(0, Lx))
+#y_basis = de.Fourier('y', Ny, interval=(0, Ly))
+x_basis = de.SinCos('x', Nx, interval=(0, Lx/2))
+y_basis = de.SinCos('y', Ny, interval=(0, Ly/2))
 z_basis = de.Chebyshev('z', Nz, interval=(0, Lz))
 domain = de.Domain([x_basis,y_basis,z_basis], grid_dtype=np.float64)
 
 # 3D Boussinesq
 #problem = de.IVP(domain, variables=['p','b','u','v','w','by','vy','uy','wy','bz','uz','vz','wz'])
 problem = de.IVP(domain, variables=['p','b','u','v','w','bz','uz','vz','wz'], time='t')
+
+problem.meta['p','b','w','bz','wz']['x','y']['parity'] = 1
+problem.meta['v','vz']['x']['parity'] = 1
+problem.meta['v','vz']['y']['parity'] = -1
+problem.meta['u','uz']['x']['parity'] = -1
+problem.meta['u','uz']['y']['parity'] = 1
+
 problem.meta[:]['z']['dirichlet'] = True
 problem.parameters['P'] = (Rayleigh * Prandtl)**(-1/2)
 problem.parameters['R'] = (Rayleigh / Prandtl)**(-1/2)
 problem.parameters['F'] = F = 1
 
 problem.add_equation("dx(u)+dy(v)+wz = 0") #Fluido Incompresible
-problem.add_equation("dt(b) - P*(dx(dx(b)) + dy(dy(b)) + dz(bz))              = -(u*dx(b) +  v*dy(b) + w*bz)") 
-problem.add_equation("dt(u) - R*(dx(dx(u)) + dy(dy(u)) + dz(uz)) + dx(p)      = -(u*dx(u) +  v*dy(u) + w*uz)")#Eq. Navier-Stokes
-problem.add_equation("dt(v) - R*(dx(dx(v)) + dy(dy(v)) + dz(vz)) + dy(p)      = -(u*dx(v) +  v*dy(v) + w*vz)")
-problem.add_equation("dt(w) - R*(dx(dx(w)) + dy(dy(w)) + dz(wz)) + dz(p) - b  = -(u*dx(w) + w*dy(w) + w*wz)")
+problem.add_equation("dt(b) - P*(dx(dx(b)) + dy(dy(b)) + dz(bz))              = - u*dx(b) - v*dy(b) - w*bz") 
+problem.add_equation("dt(u) - R*(dx(dx(u)) + dy(dy(u)) + dz(uz)) + dx(p)      = - u*dx(u) - v*dy(u) - w*uz")#Eq. Navier-Stokes
+problem.add_equation("dt(v) - R*(dx(dx(v)) + dy(dy(v)) + dz(vz)) + dy(p)      = - u*dx(v) - v*dy(v) - w*vz")
+problem.add_equation("dt(w) - R*(dx(dx(w)) + dy(dy(w)) + dz(wz)) + dz(p) - b  = - u*dx(w) - v*dy(w) - w*wz")
 
 problem.add_equation("bz - dz(b) = 0")
 problem.add_equation("uz - dz(u) = 0")
@@ -121,7 +130,7 @@ dt = 1e-3
 # Integration parameters
 solver.stop_sim_time = 1000
 solver.stop_wall_time = 100 * 60.
-solver.stop_iteration = 10 
+solver.stop_iteration = 32 
 
 max_dt = 10
 
@@ -197,7 +206,7 @@ finally:
 #        print(b_array[2][:][5][:])
        # np.savetxt("hola.txt",b_array)
         #print(b_array[0][:][1][:])
-        plt.pcolormesh(xmesh, ymesh, b_array[8][:][1][:].T, cmap='RdBu_r')
+        plt.pcolormesh(xmesh, ymesh, b_array[25][:][1][:].T, cmap='RdBu_r')
         #plt.axis(plot_tools.pad_limits(xmesh, ymesh))
         plt.colorbar()
         plt.xlabel('x')
